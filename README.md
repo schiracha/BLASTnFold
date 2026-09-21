@@ -329,9 +329,6 @@ blocking the entire alignment run.
 
 ### Workflow A — From clustered FASTA (recommended starting point)
 ```bash
-cd /scratch/rts3dd/caveolin_run01
-cp /path/to/cluster_out/clustered_sequences.fasta .
-cp /path/to/AF-Complex.cif .
 
 sbatch make_json_unified.sbatch clustered_sequences.fasta --source-tag Run01
 
@@ -371,43 +368,3 @@ cat Align_Out/skipped.log          # see what failed
 bash submit_af3.sh --from align --chain-min 11 --chain-max 11
 # Completed alignments are skipped (idempotent)
 ```
-
----
-
-## Known Limitations
-
-1. **SLURM array limit.** Rivanna's `MaxArraySize` is ~1001–2000. For large
-   inputs (>1000 sequences), submit in batches or request a limit increase
-   from UVA RC (`hpc-support@virginia.edu`). A `SLURM_ARRAY_MAX=2000` guard
-   in `submit_af3.sh` warns before submission.
-
-2. **`AF-Complex.cif` not auto-downloaded.** Must be placed in the working
-   directory manually. If absent, AFComp alignments are silently skipped.
-
-3. **Oligomer size > 26 not supported.** AF3 chain IDs are limited to A–Z.
-   The fan-out Python warns and skips any `n > 26`.
-
-4. **Region parsing and hyphens.** The `-F'[:\t-]'` parser splits on hyphens.
-   NCBI protein accessions (WP_, XP_, NP_) are safe. UniProt accessions with
-   hyphens should use `--mode accession`.
-
-5. **AF3 version flag compatibility.** `--num_diffusion_samples` and other
-   3.0.1-only flags cause fatal errors on 3.0.0. `PYTHONNOUSERSITE=1` prevents
-   `~/.local` package conflicts when switching between AF3 versions.
-
-6. **Token limit with lipids.** The 5000-token limit applies to protein chains
-   + lipid atoms combined. The fan-out Python automatically caps `chain_max`
-   and warns; lipids are disabled if they would prevent even a monomer fitting.
-
----
-
-## Version History
-
-| Date | Version | Changes |
-|------|---------|---------|
-| 2025-04 | v1.0 | Initial pipeline |
-| 2026-04 | v2.0 | Unified refactor: make_json_unified; flat AF3_Data layout; flock sentinel; submit_af3.sh orchestrator |
-| 2026-04 | v2.1 | References: 8RRH→7D60; Basename echo; multi-seed naming; token budget check; modelSeeds [1,2] |
-| 2026-04 | v2.2 | Lipid environment: POPC+POPE+CLR injection; --lipid-tokens; patch_add_lipids.sbatch |
-| 2026-04 | v2.3 | afterany for align dependency; skipped CIF logging; skipped CIF report in summarize.sh |
-| 2026-05 | v2.4 | AF3 3.0.0: removed --num_diffusion_samples; PYTHONNOUSERSITE=1; fixed array sizing bug; SLURM_ARRAY_MAX guard |
